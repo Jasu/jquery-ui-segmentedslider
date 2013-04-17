@@ -1,0 +1,10 @@
+.ui-segmentedslider-segment {
+  margin-right: 5px;
+  float: left;
+}
+.ui-segmentedslider-segment.ui-segmentedslider-last {
+  margin-right: 0;
+}
+.ui-slider-handle.ui-segmentedslider-handle {
+  margin-left: 0;
+}
