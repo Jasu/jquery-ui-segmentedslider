@@ -241,7 +241,8 @@
           newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
         newSegmentX -= this._dragPosition;
 
-        if (newSegmentX < 0)
+        if (newSegmentX < 0 
+          || newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
         {
           return true;
         }
