@@ -39,6 +39,7 @@
 
     _createSegment: function (segmentOptions, isFirst, isLast)
     {
+      var t = this;
       var type = 'continuous';
       if (('step' in segmentOptions) && segmentOptions.step > 0)
         type = 'stepped';
@@ -48,7 +49,30 @@
       var segment = $('<div/>')
         .data('segmentedslider-options', segmentOptions)
         .data('segmentedslider-type', type)
-        .appendTo(this.element);
+        .appendTo(this.element)
+        .click(function (e) {
+          if (!$(e.target).is(this))
+            return;
+          var offset = e.offsetX - t._handle.outerWidth() / 2;
+          if ($(this).data('segmentedslider-type') == 'stepped'
+            || $(this).data('segmentedslider-type') == 'discrete')
+          {
+            var numSteps, 
+                segmentOptions = $(this).data('segmentedslider-options');
+            if ($(this).data('segmentedslider-type') == 'stepped')
+              numSteps = Math.floor((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
+            else
+              numSteps = segmentOptions.values.length;
+
+            var gridLength = Math.floor(($(this).innerWidth() - t._handle.outerWidth()) / (numSteps - 1));
+            offset = Math.round(gridLength * Math.round(offset / gridLength));
+          }
+          $(t._handle)
+            .css('left', offset)
+            .draggable('destroy')
+            .appendTo($(this));
+          t._setDraggable(t._handle);
+        });
 
       if (isFirst) segment.addClass('ui-segmentedslider-first');
       if (isLast) segment.addClass('ui-segmentedslider-last');
