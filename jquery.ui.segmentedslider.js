@@ -258,7 +258,7 @@
           else
             numSteps = newSegmentOptions.values.length;
 
-          var gridLength = (newSegment.innerWidth() - handle.outerWidth()) / (numSteps - 1);
+          var gridLength = Math.floor((newSegment.innerWidth() - handle.outerWidth()) / (numSteps - 1));
           newSegmentX = Math.round(gridLength * Math.round(newSegmentX / gridLength));
         }
 
@@ -378,11 +378,11 @@
       {
         var numSteps;
         if (segmentType == 'stepped')
-          numSteps = Math.round((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
+          numSteps = Math.floor((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
         else if (segmentType == 'discrete')
           numSteps = segmentOptions.values.length;
         var fullWidth = segment.innerWidth() - handle.outerWidth();
-        var stepLength = fullWidth / (numSteps - 1)
+        var stepLength = Math.floor(fullWidth / (numSteps - 1));
         draggableOptions.grid = [ stepLength, stepLength ];
       }
 
