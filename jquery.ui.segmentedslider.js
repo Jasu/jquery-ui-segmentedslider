@@ -10,6 +10,7 @@
 
       minValueWidth: 20,
 
+//@TODO Look at ui.slider for how classes are added
       segmentClasses: ['ui-slider', 
                     'ui-slider-horizontal', 
                     'ui-corner-all',
@@ -31,6 +32,9 @@
     },
 
     _isChangingSegments : false,
+    _startEventSent: false,
+    _stopEventSent: false,
+    _isDragging: false,
 
     _handle : null,
 
@@ -50,7 +54,7 @@
         .data('segmentedslider-options', segmentOptions)
         .data('segmentedslider-type', type)
         .appendTo(this.element)
-        .click(function (e) {
+        .mousedown(function (e) {
           if (!$(e.target).is(this))
             return;
           var offset = e.offsetX - t._handle.outerWidth() / 2;
@@ -76,11 +80,29 @@
           t.options.value = t._calculateValue();
 
           if (t.options.start)
+          {
+            t._startEventSent = true;
             t.options.start(e, { handle: t._handle, value: t.options.value});
+          }
+
           if (t.options.slide)
+          {
             t.options.slide(e, { handle: t._handle, value: t.options.value});
-          if (t.options.stop)
-            t.options.stop(e, { handle: t._handle, value: t.options.value});
+          }
+
+          t._simulateMouseEvent(t._handle, e, 'mousedown');
+
+          return false;
+        })
+        .mouseup(function (e) {
+          if (!t._isDragging && t._startEventSent)
+          {
+            t._startEventSent = false;
+            if (t.options.stop)
+            {
+              t.options.stop(e, { handle: t._handle, value: t.options.value});
+            }
+          }
         });
 
       if (isFirst) segment.addClass('ui-segmentedslider-first');
@@ -248,6 +270,29 @@
         - parseInt(segment.css('padding-left', 10));
     },
 
+    _simulateMouseEvent: function(target, sourceEvent, eventType)
+    {
+      var mouseEvent = document.createEvent('MouseEvents');
+      mouseEvent.initMouseEvent(
+        eventType,
+        /*bubbles=*/true,
+        /*cancelable=*/true,
+        /*view=*/window,
+        /*detail=*/0,
+        sourceEvent.screenX,
+        sourceEvent.screenY,
+        sourceEvent.clientX,
+        sourceEvent.clientY,
+        sourceEvent.ctrlKey,
+        sourceEvent.altKey,
+        sourceEvent.shiftKey,
+        sourceEvent.metaKey,
+        sourceEvent.button,
+        sourceEvent.relatedTarget);
+      
+      $(target).get(0).dispatchEvent(mouseEvent);
+    },
+
     _handleSegmentSwitch: function (e) {
       var handle = $(this.element).find('.ui-segmentedslider-handle');
       var currentSegment = handle.parent();
@@ -306,47 +351,8 @@
 
         //Cancel the previous drag. For some reason, this must be done after
         //recreating the draggable, otherwise JQuery UI will cause an error.
-
-        var mouseEvent = document.createEvent('MouseEvents');
-        mouseEvent.initMouseEvent(
-          'mouseup',
-          /*bubbles=*/true,
-          /*cancelable=*/true,
-          /*view=*/window,
-          /*detail=*/0,
-          e.screenX,
-          e.screenY,
-          e.clientX,
-          e.clientY,
-          e.ctrlKey,
-          e.altKey,
-          e.shiftKey,
-          e.metaKey,
-          e.button,
-          e.relatedTarget);
-        
-        handle.get(0).dispatchEvent(mouseEvent);
-
-        //Start a new drag event, from where we left.
-        var mouseEvent = document.createEvent('MouseEvents');
-        mouseEvent.initMouseEvent(
-          'mousedown',
-          /*bubbles=*/true,
-          /*cancelable=*/true,
-          /*view=*/window,
-          /*detail=*/0,
-          e.screenX,
-          e.screenY,
-          e.clientX,
-          e.clientY,
-          e.ctrlKey,
-          e.altKey,
-          e.shiftKey,
-          e.metaKey,
-          e.button,
-          e.relatedTarget);
-
-        handle.get(0).dispatchEvent(mouseEvent);
+        this._simulateMouseEvent(this._handle, e, 'mouseup');
+        this._simulateMouseEvent(this._handle, e, 'mousedown');
         return false;
       }
       return true;
@@ -362,6 +368,7 @@
         axis: 'x',
         containment: 'parent',
         start: function (e, ui) {
+          t._isDragging = true;
           var value = t._calculateValue();
           //When the slider handle moves between segments, draggable is
           //recreated and an end and a start event are generated. These are
@@ -370,7 +377,7 @@
           {
             t._dragPosition = e.clientX - t._handle.offset().left;
 
-            if (t.options.start)
+            if (t.options.start && !t._startEventSent)
             {
               t.options.value = value;
               t.options.start(e, { handle: t._handle, value: value});
@@ -395,7 +402,9 @@
           return result;
         },
         stop: function(e, ui) {
+          t._isDragging = false;
           var value = t._calculateValue();
+          t._startEventSent = true;
           if (!t._isChangingSegments)
           {
             if (t.options.stop)
