@@ -34,6 +34,9 @@
 
     _handle : null,
 
+    /* X-coordinate where the user has grabbed the slider handle at */
+    _dragPosition: 0,
+
     _createSegment: function (segmentOptions, isFirst, isLast)
     {
       var type = 'continuous';
@@ -235,13 +238,13 @@
         handle.draggable('destroy');
 
         //@TODO handle em units
-        //@TODO keep the initial drag position
         var newSegmentX = dragX;
         newSegmentX -= newSegment.offset().left;
         if (newSegment.css('left') != 'auto')
           newSegmentX -= parseInt(newSegment.css('left'), 10);
         if (newSegment.css('margin-left') != 'auto')
           newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
+        newSegmentX -= this._dragPosition;
 
         handle.appendTo(newSegment).css('left', newSegmentX + 'px');
         this._setDraggable(handle);
@@ -311,6 +314,8 @@
           //disregarded.
           if (!t._isChangingSegments)
           {
+            t._dragPosition = e.clientX - t._handle.offset().left;
+
             if (t.options.start)
             {
               t.options.value = value;
