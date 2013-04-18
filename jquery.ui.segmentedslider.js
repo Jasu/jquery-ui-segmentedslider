@@ -258,7 +258,7 @@
           else
             numSteps = newSegmentOptions.values.length;
 
-          var gridLength = newSegment.innerWidth() / (numSteps - 1);
+          var gridLength = (newSegment.innerWidth() - handle.outerWidth()) / (numSteps - 1);
           newSegmentX = Math.round(gridLength * Math.round(newSegmentX / gridLength));
         }
 
