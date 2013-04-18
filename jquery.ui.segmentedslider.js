@@ -72,6 +72,15 @@
             .draggable('destroy')
             .appendTo($(this));
           t._setDraggable(t._handle);
+
+          t.options.value = t._calculateValue();
+
+          if (t.options.start)
+            t.options.start(e, { handle: t._handle, value: t.options.value});
+          if (t.options.slide)
+            t.options.slide(e, { handle: t._handle, value: t.options.value});
+          if (t.options.stop)
+            t.options.stop(e, { handle: t._handle, value: t.options.value});
         });
 
       if (isFirst) segment.addClass('ui-segmentedslider-first');
