@@ -232,11 +232,6 @@
 
       if (newSegment && !newSegment.is(currentSegment))
       {
-        this._isChangingSegments = true;
-
-        //Recreate the draggable, since it is moved to a new parent.
-        handle.draggable('destroy');
-
         //@TODO handle em units
         var newSegmentX = dragX;
         newSegmentX -= newSegment.offset().left;
@@ -245,6 +240,31 @@
         if (newSegment.css('margin-left') != 'auto')
           newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
         newSegmentX -= this._dragPosition;
+
+        if (newSegmentX < 0)
+        {
+          return true;
+        }
+
+        //Snap to grid
+        if (newSegment.data('segmentedslider-type') == 'stepped'
+          || newSegment.data('segmentedslider-type') == 'discrete')
+        {
+          var numSteps, 
+              newSegmentOptions = newSegment.data('segmentedslider-options');
+          if (newSegment.data('segmentedslider-type') == 'stepped')
+            numSteps = Math.floor((newSegmentOptions.max - newSegmentOptions.min) / newSegmentOptions.step) + 1;
+          else
+            numSteps = newSegmentOptions.values.length;
+
+          var gridLength = newSegment.innerWidth() / (numSteps - 1);
+          newSegmentX = Math.round(gridLength * Math.round(newSegmentX / gridLength));
+        }
+
+        this._isChangingSegments = true;
+
+        //Recreate the draggable, since it is moved to a new parent.
+        handle.draggable('destroy');
 
         handle.appendTo(newSegment).css('left', newSegmentX + 'px');
         this._setDraggable(handle);
