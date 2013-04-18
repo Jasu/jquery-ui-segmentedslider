@@ -10,19 +10,6 @@
 
       minValueWidth: 20,
 
-//@TODO Look at ui.slider for how classes are added
-      segmentClasses: ['ui-slider', 
-                    'ui-slider-horizontal', 
-                    'ui-corner-all',
-                    'ui-segmentedslider-segment',
-                    'ui-state-default'
-                    ],
-
-      handleClasses: ['ui-slider-handle', 
-                      'ui-corner-all',
-                      'ui-state-default',
-                      'ui-segmentedslider-handle'],
-
       /* Callbacks */
       slide: null,
       start: null,
@@ -92,6 +79,8 @@
 
           t._simulateMouseEvent(t._handle, e, 'mousedown');
 
+          t._handle.addClass('ui-state-active');
+
           return false;
         })
         .mouseup(function (e) {
@@ -103,12 +92,17 @@
               t.options.stop(e, { handle: t._handle, value: t.options.value});
             }
           }
+          t._handle.removeClass('ui-state-active');
         });
 
       if (isFirst) segment.addClass('ui-segmentedslider-first');
       if (isLast) segment.addClass('ui-segmentedslider-last');
 
-      $.each(this.options.segmentClasses, function (i,e) { segment.addClass(e); });
+      segment.addClass('ui-slider')
+             .addClass('ui-slider-horizontal')
+             .addClass('ui-corner-all')
+             .addClass('ui-widget-content')
+             .addClass('ui-segmentedslider-segment');
     },
 
     _resizeSegments: function ()
@@ -370,6 +364,7 @@
         start: function (e, ui) {
           t._isDragging = true;
           var value = t._calculateValue();
+          t._handle.addClass('ui-state-active');
           //When the slider handle moves between segments, draggable is
           //recreated and an end and a start event are generated. These are
           //disregarded.
@@ -402,6 +397,7 @@
           return result;
         },
         stop: function(e, ui) {
+          t._handle.removeClass('ui-state-active');
           t._isDragging = false;
           var value = t._calculateValue();
           t._startEventSent = true;
@@ -435,12 +431,18 @@
     _createHandle: function () {
       var t = this,
           handle = $('<div />');
-      this._handle = handle;
-      $.each(this.options.handleClasses, function (i,e) { handle.addClass(e); });
+      handle.addClass('ui-slider-handle')
+            .addClass('ui-corner-all')
+            .addClass('ui-state-default')
+            .addClass('ui-segmentedslider-handle');
+
       var segment = this._findSegment(this.options.value);
       if (segment === null)
         segment = $(this.element).find(':first-child');
+
       segment.append(handle);
+      this._handle = handle;
+
       this._setDraggable(handle);
     },
 
@@ -448,6 +450,9 @@
     {
       this._createSegments();
       this._createHandle();
+      this.element.addClass('ui-slider')
+                  .addClass('ui-slider-horizontal')
+                  .addClass('ui-widget');
     },
 
     _destroy: function ()
