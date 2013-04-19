@@ -15,6 +15,8 @@
       start: null,
       stop: null,
 
+      bridgeElements: true,
+
       epsilon: 0.00001
     },
 
@@ -126,7 +128,7 @@
           sumRanges = 0,
           
           //Set of all segments.
-          $segments = $(this.element).children(),
+          $segments = $(this.element).children('.ui-segmentedslider-segment'),
           
           t = this;
 
@@ -186,6 +188,13 @@
       var t = this;
       var numAdded = 0, numLeft = this.options.segments.length;
       $.each(this.options.segments, function (i, e) {
+        if (numAdded > 0 && t.options.bridgeElements)
+        {
+          var bridge = $('<div />');
+          bridge.addClass('ui-segmentedslider-bridge')
+                .addClass('ui-widget-content');
+          t.element.append(bridge);
+        }
         --numLeft;
         t._createSegment(e, /*isFirst=*/numAdded == 0, numLeft == 0);
         ++numAdded;
@@ -196,7 +205,7 @@
 
     _findSegment: function (value) {
       var t = this, 
-          $segments = $(this.element).children(),
+          $segments = $(this.element).children('.ui-segmentedslider-segment'),
           result = null;
       $segments.each(function (i, e) {
         var $e = $(e),
