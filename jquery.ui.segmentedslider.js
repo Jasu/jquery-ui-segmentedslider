@@ -230,11 +230,13 @@
             sliderOptions = $e.data('segmentedslider-options');
         switch ($e.data('segmentedslider-type')) {
           case 'continuous':
-            if (sliderOptions.min <= value && sliderOptions.max >= value)
+            ///@TODO find a way to check whether value is numeric.
+            if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
               result = $e;
             break;
           case 'stepped':
-            if (sliderOptions.min <= value && sliderOptions.max >= value)
+            ///@TODO find a way to check whether value is numeric.
+            if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
             {
               var numSteps = (value - sliderOptions.min) / sliderOptions.step;
               if (Math.abs(numSteps - parseInt(numSteps, 10)) 
@@ -320,7 +322,7 @@
       var dragX = e.pageX;
       var newSegment;
 
-      this.element.children().each(function(i,e) {
+      this.element.children('.ui-segmentedslider-segment').each(function(i,e) {
         var $e = $(e);
         if ($e.offset().left <= dragX 
           && $e.offset().left + $e.outerWidth() > dragX)
@@ -340,11 +342,15 @@
           newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
         newSegmentX -= this._dragPosition;
 
-        if (newSegmentX < 0 
-          || newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
+        if (newSegmentX < 0)
         {
-          return true;
+          newSegmentX = 0;
         }
+        if (newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
+        {
+          newSegmentX = newSegment.innerWidth() - this._handle.outerWidth();
+        }
+        console.log('pass');
 
         //Snap to grid
         if (newSegment.data('segmentedslider-type') == 'stepped'
