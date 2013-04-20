@@ -227,7 +227,7 @@
           result = null;
       $segments.each(function (i, e) {
         var $e = $(e),
-            sliderOptions = $e.data('segmentedslider-options');
+        sliderOptions = $e.data('segmentedslider-options');
         switch ($e.data('segmentedslider-type')) {
           case 'continuous':
             ///@TODO find a way to check whether value is numeric.
@@ -239,7 +239,8 @@
             if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
             {
               var numSteps = (value - sliderOptions.min) / sliderOptions.step;
-              if (Math.abs(numSteps - parseInt(numSteps, 10)) 
+              console.log(numSteps);
+              if (Math.abs(numSteps - Math.round(numSteps)) 
                 < t.options.epsilon)
               {
                 result = $e;
@@ -461,6 +462,32 @@
       handle.draggable(draggableOptions);
     },
 
+    _setHandlePosition: function () {
+      var segment = this._handle.parent(),
+          segmentData = segment.data('segmentedslider-options'),
+          segmentType = segment.data('segmentedslider-type'),
+          segmentWidth = segment.innerWidth() - this._handle.outerWidth(),
+          value = this.options.value,
+          position;
+
+      switch (segmentType)
+      {
+        case 'continuous':
+        case 'stepped':
+          position = (value - segmentData.min) 
+            / (segmentData.max - segmentData.min);
+          position *= segmentWidth;
+          break;
+        case 'discrete':
+          position = segmentData.values.indexOf(value) 
+            / segmentData.values.length;
+          position *= segmentWidth;
+          break;
+      }
+
+      this._handle.css('left', position);
+    },
+
     _createHandle: function () {
       var t = this,
           handle = $('<div />');
@@ -477,6 +504,7 @@
       this._handle = handle;
 
       this._setDraggable(handle);
+      this._setHandlePosition();
     },
 
     _create: function ()
