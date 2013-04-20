@@ -146,19 +146,34 @@
 
           if ($e.data('segmentedslider-type') === 'discrete')
           {
-            sumDiscreteWidths += t.options.minValueWidth 
+            var w = t.options.minValueWidth 
               * ($e.data('segmentedslider-options').values.length - 1);
+            
+            if (w == 0)
+            {
+              w = t.options.minValueWidth;
+            }
+
+            sumDiscreteWidths += w;
           }
           else
           {
-            sumRanges += Math.abs($e.data('segmentedslider-options').max
+            w = Math.abs($e.data('segmentedslider-options').max
                 - $e.data('segmentedslider-options').min);
+
+            if (w == 0)
+            {
+              w = t.options.minValueWidth;
+            }
+
+            sumRanges += w;
           }
         });
 
       sumMargins += lastMarginRight;
 
       var availableWidth = parseInt($(this.element).innerWidth(), 10);
+      console.log(availableWidth);
       availableWidth -= sumMargins;
       availableWidth -= sumOuterWidths - sumInnerWidths;
       availableWidth -= sumDiscreteWidths;
@@ -179,6 +194,9 @@
             width = widthPerRange * Math.abs(segmentOptions.max - segmentOptions.min);
             break;
         }
+
+        if (width == 0)
+          width = t.options.minValueWidth;
 
         $e.css('width', width + 'px');
       });
@@ -457,11 +475,13 @@
 
     _create: function ()
     {
-      this._createSegments();
-      this._createHandle();
-      this.element.addClass('ui-slider')
+      this.element.addClass('ui-segmentedslider')
+                  .addClass('ui-slider')
                   .addClass('ui-slider-horizontal')
                   .addClass('ui-widget');
+
+      this._createSegments();
+      this._createHandle();
     },
 
     _destroy: function ()
