@@ -247,14 +247,14 @@
       switch (segment.data('segmentedslider-type'))
       {
         case 'continuous':
-          return segmentOptions.min 
-            + (segmentOptions.max - segmentOptions.min) * relativePosition;
+          return (segmentOptions.min 
+            + (segmentOptions.max - segmentOptions.min) * relativePosition).toFixed(5);
         case 'stepped':
           var numSteps = 
             Math.ceil((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
           var stepLength = 1.0 / (numSteps - 1.0);
           var selection = Math.round(relativePosition / stepLength);
-          return segmentOptions.min + segmentOptions.step * selection;
+          return (segmentOptions.min + segmentOptions.step * selection).toFixed(5);
         case 'discrete':
           var stepLength = 1.0 / (segmentOptions.values.length - 1.0);
           var selection = Math.round(relativePosition / stepLength)
