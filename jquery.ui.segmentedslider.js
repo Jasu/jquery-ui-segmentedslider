@@ -146,19 +146,34 @@
 
           if ($e.data('segmentedslider-type') === 'discrete')
           {
-            sumDiscreteWidths += t.options.minValueWidth 
+            var w = t.options.minValueWidth 
               * ($e.data('segmentedslider-options').values.length - 1);
+            
+            if (w == 0)
+            {
+              w = t.options.minValueWidth;
+            }
+
+            sumDiscreteWidths += w;
           }
           else
           {
-            sumRanges += Math.abs($e.data('segmentedslider-options').max
+            w = Math.abs($e.data('segmentedslider-options').max
                 - $e.data('segmentedslider-options').min);
+
+            if (w == 0)
+            {
+              w = t.options.minValueWidth;
+            }
+
+            sumRanges += w;
           }
         });
 
       sumMargins += lastMarginRight;
 
       var availableWidth = parseInt($(this.element).innerWidth(), 10);
+      console.log(availableWidth);
       availableWidth -= sumMargins;
       availableWidth -= sumOuterWidths - sumInnerWidths;
       availableWidth -= sumDiscreteWidths;
@@ -179,6 +194,9 @@
             width = widthPerRange * Math.abs(segmentOptions.max - segmentOptions.min);
             break;
         }
+
+        if (width == 0)
+          width = t.options.minValueWidth;
 
         $e.css('width', width + 'px');
       });
@@ -209,17 +227,20 @@
           result = null;
       $segments.each(function (i, e) {
         var $e = $(e),
-            sliderOptions = $e.data('segmentedslider-options');
+        sliderOptions = $e.data('segmentedslider-options');
         switch ($e.data('segmentedslider-type')) {
           case 'continuous':
-            if (sliderOptions.min <= value && sliderOptions.max >= value)
+            ///@TODO find a way to check whether value is numeric.
+            if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
               result = $e;
             break;
           case 'stepped':
-            if (sliderOptions.min <= value && sliderOptions.max >= value)
+            ///@TODO find a way to check whether value is numeric.
+            if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
             {
               var numSteps = (value - sliderOptions.min) / sliderOptions.step;
-              if (Math.abs(numSteps - parseInt(numSteps, 10)) 
+              console.log(numSteps);
+              if (Math.abs(numSteps - Math.round(numSteps)) 
                 < t.options.epsilon)
               {
                 result = $e;
@@ -302,7 +323,7 @@
       var dragX = e.pageX;
       var newSegment;
 
-      this.element.children().each(function(i,e) {
+      this.element.children('.ui-segmentedslider-segment').each(function(i,e) {
         var $e = $(e);
         if ($e.offset().left <= dragX 
           && $e.offset().left + $e.outerWidth() > dragX)
@@ -322,11 +343,15 @@
           newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
         newSegmentX -= this._dragPosition;
 
-        if (newSegmentX < 0 
-          || newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
+        if (newSegmentX < 0)
         {
-          return true;
+          newSegmentX = 0;
         }
+        if (newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
+        {
+          newSegmentX = newSegment.innerWidth() - this._handle.outerWidth();
+        }
+        console.log('pass');
 
         //Snap to grid
         if (newSegment.data('segmentedslider-type') == 'stepped'
@@ -437,6 +462,32 @@
       handle.draggable(draggableOptions);
     },
 
+    _setHandlePosition: function () {
+      var segment = this._handle.parent(),
+          segmentData = segment.data('segmentedslider-options'),
+          segmentType = segment.data('segmentedslider-type'),
+          segmentWidth = segment.innerWidth() - this._handle.outerWidth(),
+          value = this.options.value,
+          position;
+
+      switch (segmentType)
+      {
+        case 'continuous':
+        case 'stepped':
+          position = (value - segmentData.min) 
+            / (segmentData.max - segmentData.min);
+          position *= segmentWidth;
+          break;
+        case 'discrete':
+          position = segmentData.values.indexOf(value) 
+            / segmentData.values.length;
+          position *= segmentWidth;
+          break;
+      }
+
+      this._handle.css('left', position);
+    },
+
     _createHandle: function () {
       var t = this,
           handle = $('<div />');
@@ -453,15 +504,18 @@
       this._handle = handle;
 
       this._setDraggable(handle);
+      this._setHandlePosition();
     },
 
     _create: function ()
     {
-      this._createSegments();
-      this._createHandle();
-      this.element.addClass('ui-slider')
+      this.element.addClass('ui-segmentedslider')
+                  .addClass('ui-slider')
                   .addClass('ui-slider-horizontal')
                   .addClass('ui-widget');
+
+      this._createSegments();
+      this._createHandle();
     },
 
     _destroy: function ()
