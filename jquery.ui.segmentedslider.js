@@ -30,6 +30,47 @@
     /* X-coordinate where the user has grabbed the slider handle at */
     _dragPosition: 0,
 
+    _documentPositionToHandlePosition: function (segment, documentPosition)
+    {
+      var $segment = $(segment);
+      var result = documentPosition - $segment.offset().left;
+      var segmentWidth = $segment.innerWidth();
+      var segmentType = $segment.data('segmentedslider-type');
+      var segmentOptions = $segment.data('segmentedslider-options');
+      var handleWidth = this._handle.outerWidth();
+
+      //@TODO handle em units
+      if ($segment.css('left') != 'auto')
+        result -= parseFloat($segment.css('left')); 
+      if ($segment.css('margin-left') != 'auto')
+        result -= parseFloat($segment.css('margin-left')); 
+      //@TODO does padding need to be accounted for?
+      if (this._isDragging)
+        result -= this._dragPosition;
+
+      if (result < 0)
+        result = 0;
+      if (result > segmentWidth - handleWidth)
+        result = segmentWidth - handleWidth;
+
+      //Snap to grid for stepped or discrete values.
+      if (segmentType == 'stepped' || segmentType == 'discrete')
+      {
+        var numSteps;
+        if (segmentType == 'stepped')
+          //@TODO handle uneven steps
+          numSteps = Math.ceil((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
+        else
+          numSteps = segmentOptions.values.length;
+
+        var gridLength = Math.floor((segmentWidth - handleWidth) / (numSteps - 1));
+
+        result =  Math.round(gridLength * Math.round(result / gridLength));
+      }
+
+      return result;
+    },
+
     _createSegment: function (segmentOptions, isFirst, isLast)
     {
       var t = this;
@@ -46,20 +87,7 @@
         .mousedown(function (e) {
           if (!$(e.target).is(this))
             return;
-          var offset = e.offsetX - t._handle.outerWidth() / 2;
-          if ($(this).data('segmentedslider-type') == 'stepped'
-            || $(this).data('segmentedslider-type') == 'discrete')
-          {
-            var numSteps, 
-                segmentOptions = $(this).data('segmentedslider-options');
-            if ($(this).data('segmentedslider-type') == 'stepped')
-              numSteps = Math.floor((segmentOptions.max - segmentOptions.min) / segmentOptions.step) + 1;
-            else
-              numSteps = segmentOptions.values.length;
-
-            var gridLength = Math.floor(($(this).innerWidth() - t._handle.outerWidth()) / (numSteps - 1));
-            offset = Math.round(gridLength * Math.round(offset / gridLength));
-          }
+          var offset = t._documentPositionToHandlePosition(this, e.pageX);
           $(t._handle)
             .css('left', offset)
             .draggable('destroy')
@@ -332,40 +360,9 @@
 
       if (newSegment && !newSegment.is(currentSegment))
       {
-        //@TODO handle em units
-        var newSegmentX = dragX;
-        newSegmentX -= newSegment.offset().left;
-        if (newSegment.css('left') != 'auto')
-          newSegmentX -= parseInt(newSegment.css('left'), 10);
-        if (newSegment.css('margin-left') != 'auto')
-          newSegmentX -= parseInt(newSegment.css('margin-left'), 10);
-        newSegmentX -= this._dragPosition;
+        var newSegmentX = this._documentPositionToHandlePosition(newSegment,
+          dragX);
 
-        if (newSegmentX < 0)
-        {
-          newSegmentX = 0;
-        }
-        if (newSegmentX > newSegment.innerWidth() - this._handle.outerWidth())
-        {
-          newSegmentX = newSegment.innerWidth() - this._handle.outerWidth();
-        }
-
-        //Snap to grid
-        if (newSegment.data('segmentedslider-type') == 'stepped'
-          || newSegment.data('segmentedslider-type') == 'discrete')
-        {
-          var numSteps, 
-              newSegmentOptions = newSegment.data('segmentedslider-options');
-          if (newSegment.data('segmentedslider-type') == 'stepped')
-            numSteps = Math.floor((newSegmentOptions.max - newSegmentOptions.min) / newSegmentOptions.step) + 1;
-          else
-            numSteps = newSegmentOptions.values.length;
-
-          var gridLength = Math.floor((newSegment.innerWidth() - handle.outerWidth()) / (numSteps - 1));
-          newSegmentX = Math.round(gridLength * Math.round(newSegmentX / gridLength));
-        }
-
-        this._isChangingSegments = true;
 
         //Recreate the draggable, since it is moved to a new parent.
         handle.draggable('destroy');
@@ -376,8 +373,10 @@
 
         //Cancel the previous drag. For some reason, this must be done after
         //recreating the draggable, otherwise JQuery UI will cause an error.
+        this._isChangingSegments = true;
         this._simulateMouseEvent(this._handle, e, 'mouseup');
         this._simulateMouseEvent(this._handle, e, 'mousedown');
+        this._isChangingSegments = false;
         return false;
       }
       return true;
@@ -408,10 +407,6 @@
               t.options.value = value;
               t.options.start(e, { handle: t._handle, value: value});
             }
-          }
-          else
-          {
-            t._isChangingSegments = false;
           }
         },
         drag: function (e, ui) {
