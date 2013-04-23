@@ -173,7 +173,6 @@
       sumMargins += lastMarginRight;
 
       var availableWidth = parseInt($(this.element).innerWidth(), 10);
-      console.log(availableWidth);
       availableWidth -= sumMargins;
       availableWidth -= sumOuterWidths - sumInnerWidths;
       availableWidth -= sumDiscreteWidths;
@@ -239,7 +238,6 @@
             if (value !== '' && sliderOptions.min <= value && sliderOptions.max >= value)
             {
               var numSteps = (value - sliderOptions.min) / sliderOptions.step;
-              console.log(numSteps);
               if (Math.abs(numSteps - Math.round(numSteps)) 
                 < t.options.epsilon)
               {
@@ -351,7 +349,6 @@
         {
           newSegmentX = newSegment.innerWidth() - this._handle.outerWidth();
         }
-        console.log('pass');
 
         //Snap to grid
         if (newSegment.data('segmentedslider-type') == 'stepped'
@@ -437,6 +434,11 @@
           t._startEventSent = true;
           if (!t._isChangingSegments)
           {
+            if (t.options.value != value && t.options.slide)
+            {
+              t.options.value = value;
+              t.options.slide(e, { handle: t._handle, value: value});
+            }
             if (t.options.stop)
             {
               t.options.value = value;
