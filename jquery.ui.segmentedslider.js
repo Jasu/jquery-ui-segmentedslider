@@ -42,8 +42,8 @@
       //@TODO handle em units
       if ($segment.css('left') != 'auto')
         result -= parseFloat($segment.css('left')); 
-      if ($segment.css('margin-left') != 'auto')
-        result -= parseFloat($segment.css('margin-left')); 
+      //if ($segment.css('margin-left') != 'auto')
+        //result -= parseFloat($segment.css('margin-left')); 
       //@TODO does padding need to be accounted for?
       if (this._isDragging)
         result -= this._dragPosition;
@@ -63,9 +63,29 @@
         else
           numSteps = segmentOptions.values.length;
 
-        var gridLength = Math.floor((segmentWidth - handleWidth) / (numSteps - 1));
+        var gridLength;
+        if (numSteps == 1) 
+        {
+          gridLength = 0; 
+        }
+        else 
+        {
+          gridLength = (segmentWidth - handleWidth) / (numSteps - 1);
+        }
 
-        result =  Math.round(gridLength * Math.round(result / gridLength));
+        var step;
+        if (gridLength == 0)
+        {
+          step = 0;
+        }
+        else
+        {
+          step = Math.round(result / gridLength);
+          if (step < 0) step = 0;
+          if (step >= numSteps) step = numSteps - 1;
+        }
+
+        result = Math.round(gridLength * step);
       }
 
       return result;
@@ -349,7 +369,9 @@
       var dragX = e.pageX;
       var newSegment;
 
-      this.element.children('.ui-segmentedslider-segment').each(function(i,e) {
+      var segments = this.element.children('.ui-segmentedslider-segment');
+
+      segments.each(function(i,e) {
         var $e = $(e);
         if ($e.offset().left <= dragX 
           && $e.offset().left + $e.outerWidth() > dragX)
@@ -358,18 +380,27 @@
         }
       });
 
+      //Dragging out of bounds means selecting the edge values:
+      if (!newSegment)
+      {
+        var firstSegment = segments.first();
+        var lastSegment = segments.last();
+        if (firstSegment.offset().left + firstSegment.outerWidth() > dragX)
+          newSegment = firstSegment;
+        if (lastSegment.offset().left < dragX)
+          newSegment = lastSegment;
+      }
+
       if (newSegment && !newSegment.is(currentSegment))
       {
         var newSegmentX = this._documentPositionToHandlePosition(newSegment,
           dragX);
-
 
         //Recreate the draggable, since it is moved to a new parent.
         handle.draggable('destroy');
 
         handle.appendTo(newSegment).css('left', newSegmentX + 'px');
         this._setDraggable(handle);
-
 
         //Cancel the previous drag. For some reason, this must be done after
         //recreating the draggable, otherwise JQuery UI will cause an error.
@@ -451,7 +482,7 @@
         else if (segmentType == 'discrete')
           numSteps = segmentOptions.values.length;
         var fullWidth = segment.innerWidth() - handle.outerWidth();
-        var stepLength = Math.floor(fullWidth / (numSteps - 1));
+        var stepLength = fullWidth / (numSteps - 1);
         draggableOptions.grid = [ stepLength, stepLength ];
       }
 
